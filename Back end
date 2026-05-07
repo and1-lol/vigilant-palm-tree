@@ -1,0 +1,66 @@
+# --- CELL 2: ORIGINAL PYTHON CRAFTCOIN BACKEND ---
+import random, datetime, hashlib, os, json
+from flask import Flask, request, jsonify
+
+LEDGER_DIR = '/content/CraftcoinData'
+os.makedirs(LEDGER_DIR, exist_ok=True)
+ADDR_FILE = os.path.join(LEDGER_DIR, 'addr.json')
+LOG_FILE = os.path.join(LEDGER_DIR, 'log.txt')
+
+# --- OG LOGIC FUNCTIONS ---
+def load_addr():
+    if os.path.exists(ADDR_FILE):
+        with open(ADDR_FILE, 'r') as f: return json.load(f)
+    return {'a': 0, 'b': 0, 'c': 0}
+
+def save_addr(data):
+    with open(ADDR_FILE, 'w') as f: json.dump(data, f, indent=2)
+
+def led(message):
+    time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    with open(LOG_FILE, 'a') as f: f.write(f'[{time}] {message}\n')
+
+def ee(): # OG scouting number generator
+    return random.randint(1,10000)
+
+app = Flask(__name__)
+
+@app.route('/api/balance/<address>', methods=['GET'])
+def balance_api(address):
+    addr_data = load_addr()
+    bal = addr_data.get(address.lower())
+    return jsonify({"status": "success", "balance": bal}) if bal is not None else (jsonify({"error": "Invalid Address"}), 404)
+
+@app.route('/api/scout', methods=['POST'])
+def scout_api():
+    data = request.get_json()
+    addr_data = load_addr()
+    target_num = ee()
+    user_num = int(data.get('number', 0))
+    address = data.get('address', '').lower()
+    
+    if user_num == target_num:
+        if address in addr_data:
+            addr_data[address] += 20
+            save_addr(addr_data)
+            led(f'Scouted 20 Craftcoin for {address} by entering {user_num}')
+            return jsonify({"status": "success", "message": "You won 20 Craftcoin!"})
+    return jsonify({"status": "fail", "message": f"Incorrect. The number was {target_num}"}), 400
+
+@app.route('/api/transfer', methods=['POST'])
+def transfer_api():
+    data = request.get_json()
+    addr_data = load_addr()
+    u, t, amt = data.get('from'), data.get('to'), float(data.get('amount', 0))
+    
+    if addr_data.get(u, 0) >= amt and amt > 0:
+        addr_data[u] -= amt
+        addr_data[t] += amt
+        save_addr(addr_data)
+        led(f'Transaction: {u} sent {amt} Craftcoin to {t}')
+        return jsonify({"status": "success"})
+    return jsonify({"status": "error", "message": "Insufficient funds or invalid transfer"}), 400
+
+if __name__ == '__main__':
+    print("Starting OG Craftcoin Backend API...")
+    app.run(host='0.0.0.0', port=5000)
