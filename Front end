@@ -1,0 +1,82 @@
+
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>Craftcoin V3.0</title>
+    <style>
+        body { font-family: sans-serif; background: #121212; color: #e0e0e0; display: flex; margin: 0; height: 100vh; }
+        #menu { width: 200px; background: #1f1f1f; padding: 20px; border-right: 1px solid #333; }
+        #content { flex: 1; padding: 40px; overflow-y: auto; }
+        button { display: block; width: 100%; padding: 10px; margin: 10px 0; background: #333; color: white; border: 1px solid #444; cursor: pointer; }
+        button:hover { background: #444; }
+        input { width: 100%; padding: 8px; margin: 5px 0; background: #222; color: white; border: 1px solid #444; }
+        .card { background: #1f1f1f; padding: 20px; border-radius: 8px; border: 1px solid #333; }
+        #log { background: #000; padding: 10px; height: 200px; overflow-y: scroll; font-family: monospace; font-size: 12px; border: 1px solid #333; }
+    </style>
+</head>
+<body>
+
+<div id='menu'>
+    <h3>Craftcoin</h3>
+    <button onclick='showPage("scout")'>To Scout</button>
+    <button onclick='showPage("transfer")'>Transfer</button>
+    <button onclick='showPage("ledger")'>Ledger</button>
+    <button onclick='showPage("balance")'>Check Balance</button>
+</div>
+
+<div id='content'>
+    <div id='view'></div>
+</div>
+
+<script>
+    // Storage logic
+    if (!localStorage.getItem('addr')) localStorage.setItem('addr', JSON.stringify({ 'a': 100, 'b': 50, 'c': 10 }));
+    if (!localStorage.getItem('ledger')) localStorage.setItem('ledger', 'System Initialized');
+
+    function getBalances() { return JSON.parse(localStorage.getItem('addr')); }
+    function setBalances(b) { localStorage.setItem('addr', JSON.stringify(b)); }
+    function addLog(msg) {
+        let time = new Date().toLocaleString();
+        let current = localStorage.getItem('ledger');
+        localStorage.setItem('ledger', current + `\\n[${time}] ${msg}`);
+    }
+
+    function showPage(page) {
+        const view = document.getElementById('view');
+        if (page === 'scout') {
+            view.innerHTML = `<div class='card'><h2>Scout</h2><input type='number' id='snum' placeholder='Guess 1-5'><input type='text' id='saddr' placeholder='Address'><button onclick='doScout()'>Submit</button></div>`;
+        } else if (page === 'transfer') {
+            view.innerHTML = `<div class='card'><h2>Transfer</h2><input type='text' id='u' placeholder='From'><input type='text' id='t' placeholder='To'><input type='number' id='a' placeholder='Amount'><button onclick='doTransfer()'>Send</button></div>`;
+        } else if (page === 'ledger') {
+            view.innerHTML = `<h2>Ledger</h2><div id='log'>${localStorage.getItem('ledger').replace(/\\n/g, '<br>')}</div>`;
+        } else if (page === 'balance') {
+            view.innerHTML = `<div class='card'><h2>Check Balance</h2><input type='text' id='baddr' placeholder='Address'><button onclick='doBalance()'>Check</button><p id='bres'></p></div>`;
+        }
+    }
+
+    function doScout() {
+        let num = document.getElementById('snum').value; let addr = document.getElementById('saddr').value; 
+        let win = Math.floor(Math.random() * 5) + 1;
+        if (parseInt(num) === win) {
+            let b = getBalances(); if(b[addr]!==undefined) { b[addr]+=20; setBalances(b); addLog(`Scouted 20 for ${addr}`); alert('Won 20!'); }
+        } else alert('Lost! Correct was ' + win);
+    }
+
+    function doTransfer() {
+        let u = document.getElementById('u').value; let t = document.getElementById('t').value; let amt = parseFloat(document.getElementById('a').value);
+        let b = getBalances();
+        if (b[u] >= amt && amt > 0) {
+            b[u] -= amt; b[t] += amt; setBalances(b); addLog(`${u} sent ${amt} to ${t}`); alert('Success!');
+        } else alert('Insufficient funds.');
+    }
+
+    function doBalance() {
+        let addr = document.getElementById('baddr').value; let b = getBalances();
+        document.getElementById('bres').innerText = b[addr] !== undefined ? `Balance: ${b[addr]} CC` : 'Not Found';
+    }
+    showPage('scout');
+</script>
+</body>
+</html>
