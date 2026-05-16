@@ -7,7 +7,7 @@ import tkinter as tk # Added import for transfer syste
 import json # NEW: Import json for file operations
 
 # Define a local directory for ledger and chat files
-LEDGER_DIR = '/content/CraftcoinData' # Changed to local Colab path
+LEDGER_DIR = 'https://and1-lol.github.io/vigilant-palm-tree/' # Changed to local Colab path
 os.makedirs(LEDGER_DIR, exist_ok=True)
 
 # Define file paths
